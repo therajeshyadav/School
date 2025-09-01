@@ -34,3 +34,16 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Unused UI components (TypeScript versions - using JavaScript versions instead)
+components/ui/*.tsx
+
+# Unused directories and files
+/supabase/
+/hooks/
+/.bolt/
+/.vscode/
+/public/schoolImages/
+
+# Unused component files
+components/ui/badge.tsx

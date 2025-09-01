@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
-import { SchoolService, type SchoolFormData } from '@/lib/schoolService'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -12,6 +11,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Upload, CheckCircle, AlertCircle, School } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import Image from 'next/image'
 
 const schoolSchema = z.object({
   name: z.string().min(2, 'School name must be at least 2 characters'),
@@ -25,14 +25,12 @@ const schoolSchema = z.object({
   image: z.any().optional()
 })
 
-type FormData = z.infer<typeof schoolSchema>
-
 export function SchoolForm() {
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle')
+  const [submitStatus, setSubmitStatus] = useState('idle')
   const [errorMessage, setErrorMessage] = useState('')
-  const [selectedImage, setSelectedImage] = useState<File | null>(null)
-  const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [selectedImage, setSelectedImage] = useState(null)
+  const [imagePreview, setImagePreview] = useState(null)
 
   const {
     register,
@@ -40,11 +38,11 @@ export function SchoolForm() {
     formState: { errors },
     reset,
     setValue
-  } = useForm<FormData>({
+  } = useForm({
     resolver: zodResolver(schoolSchema)
   })
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = (e) => {
     const file = e.target.files?.[0]
     if (file) {
       setSelectedImage(file)
@@ -52,26 +50,54 @@ export function SchoolForm() {
       
       const reader = new FileReader()
       reader.onload = (e) => {
-        setImagePreview(e.target?.result as string)
+        setImagePreview(e.target?.result)
       }
       reader.readAsDataURL(file)
     }
   }
 
-  const onSubmit = async (data: FormData) => {
+  const onSubmit = async (data) => {
     setIsSubmitting(true)
     setSubmitStatus('idle')
     setErrorMessage('')
 
     try {
-      const formData: SchoolFormData = {
-        ...data,
-        image: selectedImage || undefined
-      }
-
-      const result = await SchoolService.createSchool(formData)
+      // Create FormData for file upload
+      const formData = new FormData()
+      formData.append('name', data.name)
+      formData.append('address', data.address)
+      formData.append('city', data.city)
+      formData.append('state', data.state)
+      formData.append('contact', data.contact)
+      formData.append('email_id', data.email_id)
       
-      if (result.success) {
+      // Handle image upload first if there's an image
+      let imageUrl = null
+      if (selectedImage) {
+        const imageFormData = new FormData()
+        imageFormData.append('image', selectedImage)
+        
+        const uploadResponse = await fetch('/api/upload', {
+          method: 'POST',
+          body: imageFormData
+        })
+        
+        if (uploadResponse.ok) {
+          const uploadResult = await uploadResponse.json()
+          imageUrl = uploadResult.imageUrl
+        }
+      }
+      
+      formData.append('image', imageUrl || '')
+      
+      const response = await fetch('/api/schools', {
+        method: 'POST',
+        body: formData
+      })
+      
+      const result = await response.json()
+      
+      if (response.ok && result.success) {
         setSubmitStatus('success')
         reset()
         setSelectedImage(null)

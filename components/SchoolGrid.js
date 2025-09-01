@@ -1,18 +1,16 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { SchoolService } from '@/lib/schoolService'
 import { SchoolCard } from '@/components/SchoolCard'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Search, School, RefreshCw } from 'lucide-react'
-import type { School as SchoolType } from '@/lib/supabase'
 import { cn } from '@/lib/utils'
 
 export function SchoolGrid() {
-  const [schools, setSchools] = useState<SchoolType[]>([])
-  const [filteredSchools, setFilteredSchools] = useState<SchoolType[]>([])
+  const [schools, setSchools] = useState([])
+  const [filteredSchools, setFilteredSchools] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [isRefreshing, setIsRefreshing] = useState(false)
@@ -20,11 +18,25 @@ export function SchoolGrid() {
   const fetchSchools = async () => {
     try {
       setLoading(true)
-      const schoolsData = await SchoolService.getSchools()
-      setSchools(schoolsData)
-      setFilteredSchools(schoolsData)
+      const response = await fetch('/api/schools')
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      
+      const data = await response.json()
+      console.log('Fetched data:', data) // Debug log
+      
+      // Handle both array and object responses
+      const schoolsArray = Array.isArray(data) ? data : (data.schools || [])
+      console.log('Schools array:', schoolsArray) // Debug log
+      
+      setSchools(schoolsArray)
+      setFilteredSchools(schoolsArray)
     } catch (error) {
       console.error('Error fetching schools:', error)
+      setSchools([])
+      setFilteredSchools([])
     } finally {
       setLoading(false)
     }
@@ -43,8 +55,11 @@ export function SchoolGrid() {
     }
 
     try {
-      const searchResults = await SchoolService.searchSchools(searchQuery)
-      setFilteredSchools(searchResults)
+      const response = await fetch(`/api/schools?search=${encodeURIComponent(searchQuery)}`)
+      const data = await response.json()
+      // Handle both array and object responses
+      const schoolsArray = Array.isArray(data) ? data : (data.schools || [])
+      setFilteredSchools(schoolsArray)
     } catch (error) {
       console.error('Error searching schools:', error)
     }

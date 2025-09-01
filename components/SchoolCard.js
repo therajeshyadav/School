@@ -2,19 +2,14 @@
 
 import { Card, CardContent } from '@/components/ui/card'
 import { MapPin, Phone, Mail } from 'lucide-react'
-import type { School } from '@/lib/supabase'
 import Image from 'next/image'
 
-interface SchoolCardProps {
-  school: School
-}
-
-export function SchoolCard({ school }: SchoolCardProps) {
+export function SchoolCard({ school }) {
   return (
     <Card className="group hover:shadow-lg transition-all duration-300 hover:scale-[1.02] cursor-pointer overflow-hidden">
       <div className="relative h-48 w-full overflow-hidden">
         <Image
-          src={school.image_url || 'https://images.pexels.com/photos/207691/pexels-photo-207691.jpeg?auto=compress&cs=tinysrgb&w=400'}
+          src={school.image || 'https://images.pexels.com/photos/207691/pexels-photo-207691.jpeg?auto=compress&cs=tinysrgb&w=400'}
           alt={school.name}
           fill
           className="object-cover group-hover:scale-110 transition-transform duration-500"
