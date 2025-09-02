@@ -39,6 +39,7 @@ next-env.d.ts
 components/ui/*.tsx
 
 # Unused directories and files
+/supabase
 /supabase/
 /hooks/
 /.bolt/
