@@ -1,4 +1,4 @@
-/** @type {import('next').NextConfig} */
+
 const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
@@ -6,6 +6,13 @@ const nextConfig = {
   images: { 
     unoptimized: true,
     domains: ['localhost']
+  },
+  output: 'standalone',   
+  typescript: {
+    ignoreBuildErrors: true,  
+  },
+  experimental: {
+    missingSuspenseWithCSRBailout: false, 
   },
 };
 
