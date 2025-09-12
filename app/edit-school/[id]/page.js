@@ -5,11 +5,14 @@ import { useRouter, useParams } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import Image from "next/image";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Upload, AlertCircle } from "lucide-react";
 
 export default function EditSchoolPage() {
   const router = useRouter();
-  const params = useParams();
-  const { id } = params;
+  const { id } = useParams();
 
   const [formData, setFormData] = useState({
     name: "",
@@ -18,23 +21,25 @@ export default function EditSchoolPage() {
     state: "",
     contact: "",
     email_id: "",
-    image: "", // will hold image URL or base64
+    image: "",
   });
-  const [preview, setPreview] = useState(""); // for showing preview
+  const [preview, setPreview] = useState("");
+  const [selectedImage, setSelectedImage] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     async function fetchSchool() {
       try {
         const res = await fetch(`/api/schools/${id}`);
-        if (!res.ok) throw new Error("Failed to fetch");
-
+        if (!res.ok) throw new Error("Failed to fetch school");
         const data = await res.json();
         setFormData(data);
-        setPreview(data.image || ""); // set preview
+        setPreview(data.image || "");
       } catch (err) {
-        console.error("Error fetching school:", err);
-        alert("Could not load school details ❌");
+        console.error(err);
+        alert("Failed to load school details ❌");
       } finally {
         setLoading(false);
       }
@@ -42,134 +47,214 @@ export default function EditSchoolPage() {
     fetchSchool();
   }, [id]);
 
-  // ✅ Handle text input change
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+  const handleInputChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // ✅ Handle image file upload
-  const handleFileChange = (e) => {
+  const handleFileChange = async (e) => {
     const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData({ ...formData, image: reader.result }); // base64
-        setPreview(reader.result);
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    setSelectedImage(file);
+
+    // Preview
+    const reader = new FileReader();
+    reader.onload = (e) => setPreview(e.target.result);
+    reader.readAsDataURL(file);
+
+    // Upload to your API
+    const form = new FormData();
+    form.append("image", file);
+
+    try {
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: form,
+      });
+      const data = await res.json();
+      if (data.imageUrl) {
+        setFormData((prev) => ({ ...prev, image: data.imageUrl }));
+      } else {
+        alert("Failed to upload image ❌");
+      }
+    } catch (err) {
+      console.error("Upload failed:", err);
+      alert("Failed to upload image ❌");
     }
   };
 
-  // ✅ Handle update
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSubmitting(true);
+    setErrorMessage("");
+
     try {
       const res = await fetch(`/api/schools/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        credentials: "include", // auth ke liye
         body: JSON.stringify(formData),
       });
-      const data = await res.json();
 
-      if (data.success) {
+      const result = await res.json();
+      if (res.ok && result.success) {
         alert("School updated successfully ✅");
         router.push("/show-schools");
       } else {
-        alert(data.error || "Failed to update school ❌");
+        setErrorMessage(result.error || "Failed to update school ❌");
       }
     } catch (err) {
       console.error(err);
-      alert("Something went wrong ❌");
+      setErrorMessage("An unexpected error occurred ❌");
+    } finally {
+      setSubmitting(false);
     }
   };
 
   if (loading) return <p className="p-4">Loading...</p>;
 
   return (
-    <div className="max-w-2xl mx-auto p-6 bg-white shadow rounded">
-      <h1 className="text-2xl font-bold mb-4">Edit School</h1>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Text fields */}
-        <div>
-          <Label>Name</Label>
-          <Input
-            name="name"
-            value={formData.name || ""}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <div>
-          <Label>Address</Label>
-          <Input
-            name="address"
-            value={formData.address || ""}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <div>
-          <Label>City</Label>
-          <Input
-            name="city"
-            value={formData.city || ""}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <div>
-          <Label>State</Label>
-          <Input
-            name="state"
-            value={formData.state || ""}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <div>
-          <Label>Contact</Label>
-          <Input
-            name="contact"
-            value={formData.contact || ""}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <div>
-          <Label>Email</Label>
-          <Input
-            name="email_id"
-            type="email"
-            value={formData.email_id || ""}
-            onChange={handleChange}
-            required
-          />
-        </div>
+    <div className="min-h-screen bg-gray-50 py-8 px-4">
+      <div className="max-w-2xl mx-auto">
+        <Card className="shadow-xl border-0">
+          <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-lg">
+            <CardTitle className="text-xl">Edit School</CardTitle>
+          </CardHeader>
+          <CardContent className="p-8">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Name */}
+              <div className="space-y-2">
+                <Label>Name *</Label>
+                <Input
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
 
-        {/* Image Upload + Preview */}
-        <div>
-          <Label>School Image</Label>
-          <Input type="file" accept="image/*" onChange={handleFileChange} />
-          {preview && (
-            <div className="mt-2">
-              <p className="text-sm text-gray-600">Preview:</p>
-              <img
-                src={preview}
-                alt="Preview"
-                className="h-24 w-24 object-cover rounded border"
-              />
-            </div>
-          )}
-        </div>
+              {/* Address */}
+              <div className="space-y-2">
+                <Label>Address *</Label>
+                <Textarea
+                  name="address"
+                  value={formData.address}
+                  onChange={handleInputChange}
+                  rows={3}
+                  required
+                />
+              </div>
 
-        <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
-          Update School
-        </Button>
-      </form>
+              {/* City & State */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label>City *</Label>
+                  <Input
+                    name="city"
+                    value={formData.city}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label>State *</Label>
+                  <Input
+                    name="state"
+                    value={formData.state}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Contact & Email */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label>Contact *</Label>
+                  <Input
+                    name="contact"
+                    value={formData.contact}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label>Email *</Label>
+                  <Input
+                    type="email"
+                    name="email_id"
+                    value={formData.email_id}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Image Upload */}
+              {/* Image Upload */}
+              <div className="space-y-2">
+                <Label>School Image</Label>
+                <div
+                  className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors cursor-pointer"
+                  onClick={() => document.getElementById("imageInput").click()}
+                >
+                  {preview ? (
+                    <div className="space-y-4">
+                      <div className="relative h-32 w-full mx-auto rounded-lg overflow-hidden">
+                        <Image
+                          src={preview}
+                          alt="Preview"
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setPreview(null);
+                          setSelectedImage(null);
+                          setFormData((prev) => ({ ...prev, image: "" }));
+                        }}
+                      >
+                        Remove Image
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <Upload className="h-8 w-8 text-gray-400 mx-auto" />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Click to upload PNG, JPG up to 10MB
+                      </p>
+                    </div>
+                  )}
+                  <input
+                    type="file"
+                    id="imageInput"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleFileChange}
+                  />
+                </div>
+              </div>
+
+              {/* Error Message */}
+              {errorMessage && (
+                <p className="text-red-600 text-sm">{errorMessage}</p>
+              )}
+
+              {/* Submit */}
+              <Button
+                type="submit"
+                disabled={submitting}
+                className="w-full h-12 text-base font-medium bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+              >
+                {submitting ? "Updating..." : "Update School"}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
