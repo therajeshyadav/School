@@ -41,6 +41,8 @@ export async function DELETE(req, { params }) {
 export async function PUT(request, { params }) {
   try {
     const { id } = params;
+
+    // ✅ Token check
     const token = request.cookies.get("token")?.value;
     if (!token)
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -49,28 +51,22 @@ export async function PUT(request, { params }) {
     if (!decoded)
       return NextResponse.json({ error: "Invalid token" }, { status: 401 });
 
-    const body = await request.json();
-
-    if (body.image && body.image.length > 65535) {
-      return NextResponse.json({ error: "Image too long" }, { status: 400 });
-    }
+    // ✅ FormData read
+    const formData = await request.formData();
+    const name = formData.get("name");
+    const address = formData.get("address");
+    const city = formData.get("city");
+    const state = formData.get("state");
+    const contact = formData.get("contact");
+    const email_id = formData.get("email_id");
+    const image = formData.get("image") || null;
 
     const conn = await getConnection();
     const [result] = await conn.execute(
       `UPDATE schools 
        SET name=?, address=?, city=?, state=?, contact=?, email_id=?, image=? 
        WHERE id=? AND created_by=?`,
-      [
-        body.name,
-        body.address,
-        body.city,
-        body.state,
-        body.contact,
-        body.email_id,
-        body.image || null,
-        id,
-        decoded.email,
-      ]
+      [name, address, city, state, contact, email_id, image, id, decoded.email]
     );
 
     if (result.affectedRows === 0) {
@@ -92,7 +88,7 @@ export async function PUT(request, { params }) {
 
 export async function GET(request, { params }) {
   try {
-    const { id } = params;
+    const { id } = await params;
     console.log("Fetching school with id:", id);
     const conn = await getConnection();
 
@@ -104,7 +100,7 @@ export async function GET(request, { params }) {
       return NextResponse.json({ error: "School not found" }, { status: 404 });
     }
 
-    return NextResponse.json(rows[0]); 
+    return NextResponse.json(rows[0]);
   } catch (err) {
     console.error("Error fetching school:", err);
     return NextResponse.json(
