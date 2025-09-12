@@ -9,7 +9,7 @@ import { useAuth } from "@/context/AuthContext";
 
 export default function Navigation() {
   const pathname = usePathname();
-  const { user, logout, loading } = useAuth();
+  const { user, logout } = useAuth();
 
   const navItems = [
     { href: "/", label: "Home", icon: Home },
@@ -57,46 +57,45 @@ export default function Navigation() {
             })}
 
             {/* Auth Buttons */}
-            {!loading &&
-              (!user ? (
-                <>
-                  {/* Login */}
-                  <Link href="/login">
-                    <Button
-                      variant={pathname === "/login" ? "default" : "ghost"}
-                      className={cn(
-                        "flex items-center gap-2",
-                        pathname === "/login" &&
-                          "bg-blue-600 hover:bg-blue-700 text-white"
-                      )}
-                    >
-                      <LogIn className="h-4 w-4" /> Login
-                    </Button>
-                  </Link>
+            {!user ? (
+              <>
+                {/* Login */}
+                <Link href="/login">
+                  <Button
+                    variant={pathname === "/login" ? "default" : "ghost"}
+                    className={cn(
+                      "flex items-center gap-2",
+                      pathname === "/login" &&
+                        "bg-blue-600 hover:bg-blue-700 text-white"
+                    )}
+                  >
+                    <LogIn className="h-4 w-4" /> Login
+                  </Button>
+                </Link>
 
-                  {/* Signup */}
-                  <Link href="/signup">
-                    <Button
-                      variant={pathname === "/signup" ? "default" : "ghost"}
-                      className={cn(
-                        "flex items-center gap-2",
-                        pathname === "/signup" &&
-                          "bg-blue-600 hover:bg-blue-700 text-white"
-                      )}
-                    >
-                      <UserPlus className="h-4 w-4" /> Signup
-                    </Button>
-                  </Link>
-                </>
-              ) : (
-                <Button
-                  onClick={handleLogout}
-                  variant="destructive"
-                  className="flex items-center gap-2"
-                >
-                  <LogOut className="h-4 w-4" /> Logout
-                </Button>
-              ))}
+                {/* Signup */}
+                <Link href="/signup">
+                  <Button
+                    variant={pathname === "/signup" ? "default" : "ghost"}
+                    className={cn(
+                      "flex items-center gap-2",
+                      pathname === "/signup" &&
+                        "bg-blue-600 hover:bg-blue-700 text-white"
+                    )}
+                  >
+                    <UserPlus className="h-4 w-4" /> Signup
+                  </Button>
+                </Link>
+              </>
+            ) : (
+              <Button
+                onClick={handleLogout}
+                variant="destructive"
+                className="flex items-center gap-2"
+              >
+                <LogOut className="h-4 w-4" /> Logout
+              </Button>
+            )}
           </div>
 
           {/* Mobile Navigation */}
@@ -121,46 +120,45 @@ export default function Navigation() {
             })}
 
             {/* Auth Buttons (mobile) */}
-            {!loading &&
-              (!user ? (
-                <>
-                  <Link href="/login">
-                    <Button
-                      size="sm"
-                      variant={pathname === "/login" ? "default" : "ghost"}
-                      className={cn(
-                        "flex items-center gap-2",
-                        pathname === "/login" &&
-                          "bg-blue-600 hover:bg-blue-700 text-white"
-                      )}
-                    >
-                      <LogIn className="h-4 w-4" /> Login
-                    </Button>
-                  </Link>
-                  <Link href="/signup">
-                    <Button
-                      size="sm"
-                      variant={pathname === "/signup" ? "default" : "ghost"}
-                      className={cn(
-                        "flex items-center gap-2",
-                        pathname === "/signup" &&
-                          "bg-blue-600 hover:bg-blue-700 text-white"
-                      )}
-                    >
-                      <UserPlus className="h-4 w-4" /> Signup
-                    </Button>
-                  </Link>
-                </>
-              ) : (
-                <Button
-                  onClick={handleLogout}
-                  size="sm"
-                  variant="destructive"
-                  className="flex items-center gap-2"
-                >
-                  <LogOut className="h-4 w-4" /> Logout
-                </Button>
-              ))}
+            {!user ? (
+              <>
+                <Link href="/login">
+                  <Button
+                    size="sm"
+                    variant={pathname === "/login" ? "default" : "ghost"}
+                    className={cn(
+                      "flex items-center gap-2",
+                      pathname === "/login" &&
+                        "bg-blue-600 hover:bg-blue-700 text-white"
+                    )}
+                  >
+                    <LogIn className="h-4 w-4" /> Login
+                  </Button>
+                </Link>
+                <Link href="/signup">
+                  <Button
+                    size="sm"
+                    variant={pathname === "/signup" ? "default" : "ghost"}
+                    className={cn(
+                      "flex items-center gap-2",
+                      pathname === "/signup" &&
+                        "bg-blue-600 hover:bg-blue-700 text-white"
+                    )}
+                  >
+                    <UserPlus className="h-4 w-4" /> Signup
+                  </Button>
+                </Link>
+              </>
+            ) : (
+              <Button
+                onClick={handleLogout}
+                size="sm"
+                variant="destructive"
+                className="flex items-center gap-2"
+              >
+                <LogOut className="h-4 w-4" /> Logout
+              </Button>
+            )}
           </div>
         </div>
       </div>
