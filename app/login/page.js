@@ -4,20 +4,21 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/AuthContext";
-import { useToast } from "@/components/ui/use-toast";
 
 export default function LoginPage() {
   const [step, setStep] = useState("email"); // email → otp
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState(""); // <-- Add this
 
   const router = useRouter();
   const { login } = useAuth();
-  const { toast } = useToast();
 
   const sendOtp = async () => {
     setLoading(true);
+    setMessage(""); // reset message
+
     try {
       const res = await fetch("/api/auth/send-otp", {
         method: "POST",
@@ -30,14 +31,11 @@ export default function LoginPage() {
       if (res.ok) {
         setStep("otp");
       } else {
-        toast({
-          title: "Error",
-          description: data.error || "Failed to send OTP",
-        });
+        setMessage(data.error || "Failed to send OTP"); // <-- show error
       }
     } catch (err) {
       console.error(err);
-      toast({ title: "Error", description: "Something went wrong ❌" });
+      setMessage("Something went wrong ❌"); // <-- show error
     } finally {
       setLoading(false);
     }
@@ -45,6 +43,8 @@ export default function LoginPage() {
 
   const verifyOtp = async () => {
     setLoading(true);
+    setMessage(""); // reset message
+
     try {
       const res = await fetch("/api/auth/verify-otp", {
         method: "POST",
@@ -54,14 +54,13 @@ export default function LoginPage() {
 
       if (res.ok) {
         login({ email });
-        toast({ title: "Success", description: "Login successful!" });
         router.push("/add-school");
       } else {
-        toast({ title: "Error", description: "Invalid OTP" });
+        setMessage("Invalid OTP"); // <-- show error
       }
     } catch (err) {
       console.error(err);
-      toast({ title: "Error", description: "Something went wrong ❌" });
+      setMessage("Something went wrong ❌"); // <-- show error
     } finally {
       setLoading(false);
     }
@@ -99,13 +98,18 @@ export default function LoginPage() {
               className="mb-4"
             />
             <Button
-              className="w-full py-3"
+              className="bg-blue-600 text-white px-4 py-3 rounded w-full text-center hover:bg-blue-700 transition"
               onClick={verifyOtp}
               disabled={loading}
             >
               {loading ? "Verifying..." : "Verify OTP"}
             </Button>
           </>
+        )}
+
+        {/* Inline message */}
+        {message && (
+          <p className="mt-4 text-center text-red-600 font-medium">{message}</p>
         )}
       </div>
     </div>

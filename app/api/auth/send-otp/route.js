@@ -46,8 +46,8 @@ export async function POST(req) {
     await transporter.sendMail({
       from: process.env.EMAIL_USER,
       to: email,
-      subject: "Your OTP for Login",
-      text: `Your OTP is: ${otp}`,
+      subject: "Your OTP Code",
+      text: `Your OTP is: ${otp} . It is valid for 10 minutes.`,
     });
 
     return NextResponse.json({ success: true, message: "OTP sent" });
