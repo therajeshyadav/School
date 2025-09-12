@@ -3,14 +3,9 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
-  images: {
+  images: { 
     unoptimized: true,
-    domains: ["localhost"],
-  },
-  // Add these lines
-  output: "standalone",
-  typescript: {
-    ignoreBuildErrors: true,
+    domains: ['localhost']
   },
 };
 
