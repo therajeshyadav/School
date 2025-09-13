@@ -14,22 +14,24 @@ export async function POST(req) {
     }
 
     const conn = await getConnection();
+
+    // 1. Get the latest unused OTP for this email
     const [rows] = await conn.execute(
-      "SELECT * FROM otps WHERE email=? AND otp=? AND expires_at > NOW() ORDER BY id DESC LIMIT 1",
-      [email, otp]
+      "SELECT * FROM otps WHERE email=? AND expires_at > NOW() AND used=0 ORDER BY id DESC LIMIT 1",
+      [email]
     );
 
-    if (rows.length === 0) {
+    if (rows.length === 0 || rows[0].otp !== otp) {
       return NextResponse.json(
         { error: "Invalid or expired OTP" },
         { status: 400 }
       );
     }
 
-    // OTP valid -> delete from table
-    await conn.execute("DELETE FROM otps WHERE email=?", [email]);
+    // 2. Mark OTP as used
+    await conn.execute("UPDATE otps SET used=1 WHERE id=?", [rows[0].id]);
 
-    // JWT token
+    // 3. Generate JWT token
     const token = generateToken({ email });
 
     const res = NextResponse.json({ success: true });
