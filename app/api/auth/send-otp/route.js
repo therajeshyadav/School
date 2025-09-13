@@ -16,7 +16,6 @@ export async function POST(req) {
     const [users] = await conn.execute("SELECT * FROM users WHERE email = ?", [
       email,
     ]);
-
     if (users.length === 0) {
       return NextResponse.json(
         { error: "User not found, please signup first" },
@@ -24,16 +23,19 @@ export async function POST(req) {
       );
     }
 
-    // 2. Generate OTP
+    // 2. Delete any old OTPs for this email
+    await conn.execute("DELETE FROM otps WHERE email = ?", [email]);
+
+    // 3. Generate OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-    // 3. Save OTP in DB
+    // 4. Save OTP in DB
     await conn.execute(
-      "INSERT INTO otps (email, otp, expires_at) VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 5 MINUTE))",
+      "INSERT INTO otps (email, otp, expires_at, used) VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 10 MINUTE), 0)",
       [email, otp]
     );
 
-    // 4. Setup nodemailer
+    // 5. Setup nodemailer
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
@@ -42,7 +44,7 @@ export async function POST(req) {
       },
     });
 
-    // 5. Send email
+    // 6. Send email
     await transporter.sendMail({
       from: process.env.EMAIL_USER,
       to: email,
