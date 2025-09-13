@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,15 +10,15 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState(""); // <-- Add this
+  const [message, setMessage] = useState("");
+  const [resendTimer, setResendTimer] = useState(0); // countdown state
 
   const router = useRouter();
   const { login } = useAuth();
 
   const sendOtp = async () => {
     setLoading(true);
-    setMessage(""); // reset message
-
+    setMessage("");
     try {
       const res = await fetch("/api/auth/send-otp", {
         method: "POST",
@@ -30,12 +30,13 @@ export default function LoginPage() {
 
       if (res.ok) {
         setStep("otp");
+        setResendTimer(30); // lock resend for 30s
       } else {
-        setMessage(data.error || "Failed to send OTP"); // <-- show error
+        setMessage(data.error || "Failed to send OTP");
       }
     } catch (err) {
       console.error(err);
-      setMessage("Something went wrong ❌"); // <-- show error
+      setMessage("Something went wrong ❌");
     } finally {
       setLoading(false);
     }
@@ -43,8 +44,7 @@ export default function LoginPage() {
 
   const verifyOtp = async () => {
     setLoading(true);
-    setMessage(""); // reset message
-
+    setMessage("");
     try {
       const res = await fetch("/api/auth/verify-otp", {
         method: "POST",
@@ -56,15 +56,23 @@ export default function LoginPage() {
         login({ email });
         router.push("/add-school");
       } else {
-        setMessage("Invalid OTP"); // <-- show error
+        setMessage("Invalid OTP");
       }
     } catch (err) {
       console.error(err);
-      setMessage("Something went wrong ❌"); // <-- show error
+      setMessage("Something went wrong ❌");
     } finally {
       setLoading(false);
     }
   };
+
+  // countdown effect
+  useEffect(() => {
+    if (resendTimer > 0) {
+      const timer = setTimeout(() => setResendTimer((prev) => prev - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [resendTimer]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
@@ -104,6 +112,25 @@ export default function LoginPage() {
             >
               {loading ? "Verifying..." : "Verify OTP"}
             </Button>
+
+            {/* Resend OTP Button */}
+            <div className="mt-4 text-center">
+              {resendTimer > 0 ? (
+                <p className="text-gray-500">
+                  Resend OTP in{" "}
+                  <span className="font-semibold">{resendTimer}s</span>
+                </p>
+              ) : (
+                <Button
+                  variant="outline"
+                  onClick={sendOtp}
+                  disabled={loading}
+                  className="mt-2 w-full"
+                >
+                  Resend OTP
+                </Button>
+              )}
+            </div>
           </>
         )}
 
