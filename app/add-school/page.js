@@ -11,12 +11,12 @@ export default function AddSchoolPage() {
       .then((res) => res.json())
       .then((data) => {
         if (!data.user) {
-          router.push("/login"); // agar login nahi hai → login page bhej do
+          router.push("/login"); 
         } else {
           setUser(data.user);
         }
       });
-  }, [router]);
+  }, []); 
 
   if (!user) {
     return <p className="text-center mt-10">Checking authentication...</p>;
