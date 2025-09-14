@@ -13,7 +13,7 @@ export async function DELETE(req, { params }) {
     if (!decoded)
       return NextResponse.json({ error: "Invalid token" }, { status: 401 });
 
-    const { id } = params;
+    const { id } = await params;
     const conn = await getConnection();
     const [rows] = await conn.execute(
       "SELECT created_by FROM schools WHERE id=?",
@@ -40,7 +40,7 @@ export async function DELETE(req, { params }) {
 
 export async function PUT(request, { params }) {
   try {
-    const { id } = params;
+    const { id } = await params;
 
     // ✅ Token check
     const token = request.cookies.get("token")?.value;
