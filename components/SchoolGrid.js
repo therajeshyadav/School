@@ -72,7 +72,7 @@ export function SchoolGrid() {
     }
   };
 
-  useEffect(() => {
+   useEffect(() => {
     fetchSchools();
   }, []);
 
@@ -80,7 +80,7 @@ export function SchoolGrid() {
     if (!searchQuery.trim()) {
       setFilteredSchools(schools);
     }
-  }, [searchQuery, schools]);
+  }, [searchQuery]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
